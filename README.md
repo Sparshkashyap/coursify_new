@@ -1,5 +1,10 @@
+
+## 📸 Screenshots
+
+![App Screenshot](./screenshoot/img.png)
+
 <p align="center">
-  <img src="./screenshoot/img.png" width="800"/>
+  <img src="./screenshoot/img.png" width="900"/>
 </p>
 
 # 🎓 Coursify – Learn Without Limits
