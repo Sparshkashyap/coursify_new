@@ -6,8 +6,7 @@
 
 ## 🌐 Live Demo
 
-Frontend: https://your-frontend-url.vercel.app
-Backend API: https://your-backend-url.onrender.com
+Frontend: https://coursify-new.vercel.app/
 
 ---
 
