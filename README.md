@@ -1,7 +1,7 @@
 # 🎓 Coursify – Learn Without Limits
 
 <p align="center">
-  <img src="screenshoot/img.png" width="900"/>
+  <img src="screenshoot/im.png" width="900"/>
 </p>
 
 ## 🌐 Live Demo
