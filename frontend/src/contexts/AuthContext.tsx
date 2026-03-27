@@ -1,10 +1,18 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 interface User {
   name: string;
   email: string;
   role: string;
   avatar?: string;
+  id?: string;
+  _id?: string;
 }
 
 interface AuthContextType {
@@ -13,6 +21,7 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,6 +64,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsAuthenticated(true);
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+
+      const updatedUser = { ...prev, ...userData };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -70,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       login,
       logout,
+      updateUser,
     }),
     [user, isAuthenticated, loading]
   );

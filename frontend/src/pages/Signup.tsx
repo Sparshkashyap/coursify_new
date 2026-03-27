@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, Mail, Lock, UserRound } from "lucide-react";
+import {
+  GraduationCap,
+  Mail,
+  Lock,
+  UserRound,
+  BookOpen,
+  Briefcase,
+  ArrowRight,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import { motion } from "framer-motion";
 
@@ -16,7 +26,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -24,13 +34,13 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.08 }
-  }
+    transition: { staggerChildren: 0.08 },
+  },
 };
 
 const item = {
   hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0 }
+  show: { opacity: 1, y: 0 },
 };
 
 const Signup: React.FC = () => {
@@ -41,10 +51,11 @@ const Signup: React.FC = () => {
     name: "",
     email: "",
     password: "",
-    role: "student"
+    role: "student",
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleError = (msg: string) => {
     toast.error(msg);
@@ -87,9 +98,39 @@ const Signup: React.FC = () => {
     }
   };
 
+  const handleGoogleSignup = async (credential?: string) => {
+    try {
+      if (!credential) {
+        toast.error("Google signup failed");
+        return;
+      }
+
+      const data = await googleLogin(credential);
+
+      if (data.success) {
+        login(data.token, data.user);
+        toast.success("Google signup successful");
+
+        const role = data.user.role;
+        navigate(
+          role === "admin"
+            ? "/admin"
+            : role === "instructor"
+            ? "/instructor"
+            : "/student"
+        );
+      } else {
+        toast.error(data.message || "Google signup failed");
+      }
+    } catch {
+      toast.error("Google signup failed");
+    }
+  };
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 blur-2xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8 sm:px-6">
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(236,72,153,0.10),transparent_30%),radial-gradient(circle_at_bottom,rgba(168,85,247,0.10),transparent_32%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.04)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.04)_1px,transparent_1px)] bg-[size:34px_34px] [mask-image:radial-gradient(circle_at_center,black_38%,transparent_82%)]" />
 
       <motion.div
         variants={container}
@@ -97,133 +138,184 @@ const Signup: React.FC = () => {
         animate="show"
         className="relative w-full max-w-md"
       >
-        <Card className="border border-gray-200 bg-white/80 shadow-xl backdrop-blur dark:border-gray-700 dark:bg-white/5">
-          <CardHeader className="space-y-2 text-center">
+        <Card className="overflow-hidden border-border/70 bg-card/90 shadow-2xl backdrop-blur-xl">
+          <CardHeader className="space-y-4 pb-4 text-center">
             <motion.div variants={item} className="flex justify-center">
-              <motion.div whileHover={{ scale: 1.08 }} className="rounded-xl bg-primary/10 p-3">
+              <motion.div
+                whileHover={{ scale: 1.04 }}
+                className="rounded-2xl border border-primary/15 bg-primary/10 p-3 shadow-sm"
+              >
                 <GraduationCap className="h-8 w-8 text-primary" />
               </motion.div>
             </motion.div>
 
-            <motion.div variants={item}>
-              <CardTitle className="text-2xl">Create an account</CardTitle>
-            </motion.div>
-
-            <motion.div variants={item}>
-              <CardDescription>Start your learning journey</CardDescription>
+            <motion.div variants={item} className="space-y-1">
+              <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Create your account
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base">
+                Choose your role and start your journey
+              </CardDescription>
             </motion.div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <motion.div variants={item} className="flex justify-center">
               <GoogleLogin
-                onSuccess={async (res) => {
-                  try {
-                    const data = await googleLogin(res.credential as string);
-
-                    if (data.success) {
-                      login(data.token, data.user);
-                      toast.success("Google signup successful");
-
-                      const role = data.user.role;
-                      navigate(
-                        role === "admin"
-                          ? "/admin"
-                          : role === "instructor"
-                          ? "/instructor"
-                          : "/student"
-                      );
-                    }
-                  } catch {
-                    toast.error("Google signup failed");
-                  }
-                }}
+                onSuccess={(res) => handleGoogleSignup(res.credential)}
                 onError={() => toast.error("Google signup failed")}
               />
             </motion.div>
 
             <motion.div variants={item} className="relative">
               <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">
-                or
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                or continue with email
               </span>
             </motion.div>
 
-            <motion.form variants={container} onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              variants={container}
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
               <motion.div variants={item} className="space-y-2">
-                <Label>Name</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
-                  <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Enter your name"
+                    id="name"
+                    placeholder="Enter your full name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="pl-10"
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="h-11 rounded-xl border-border/70 pl-10"
                   />
                 </div>
               </motion.div>
 
               <motion.div variants={item} className="space-y-2">
-                <Label>Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    id="email"
                     type="email"
                     placeholder="Enter your email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="pl-10"
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="h-11 rounded-xl border-border/70 pl-10"
                   />
                 </div>
               </motion.div>
 
               <motion.div variants={item} className="space-y-2">
-                <Label>Password</Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="password"
-                    placeholder="Enter password"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="pl-10"
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="h-11 rounded-xl border-border/70 pl-10 pr-11"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </motion.div>
 
-              <motion.div variants={item} className="space-y-2">
-                <Label>Account Type</Label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full rounded-md border bg-white p-2 dark:border-gray-700 dark:bg-gray-900"
-                >
-                  <option value="student">Student</option>
-                  <option value="instructor">Instructor</option>
-                </select>
-              </motion.div>
+            <motion.div variants={item} className="space-y-2">
+  <Label>Choose Role</Label>
 
-              <motion.div variants={item}>
+  <div className="relative inline-grid w-full grid-cols-2 rounded-xl border border-border/70 bg-muted/40 p-1">
+    {/* Sliding Background */}
+    <div
+      className={`absolute top-1 bottom-1 w-1/2 rounded-lg bg-primary transition-all duration-300 ${
+        formData.role === "student" ? "left-1" : "left-[calc(50%-4px)]"
+      }`}
+    />
+
+    <button
+      type="button"
+      onClick={() =>
+        setFormData((prev) => ({ ...prev, role: "student" }))
+      }
+      className={`relative z-10 inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+        formData.role === "student"
+          ? "text-white"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <BookOpen className="h-4 w-4" />
+      Student
+    </button>
+
+    <button
+      type="button"
+      onClick={() =>
+        setFormData((prev) => ({ ...prev, role: "instructor" }))
+      }
+      className={`relative z-10 inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+        formData.role === "instructor"
+          ? "text-white"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <Briefcase className="h-4 w-4" />
+      Instructor
+    </button>
+  </div>
+</motion.div>
+
+              <motion.div variants={item} className="pt-1">
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full transition hover:scale-[1.01]"
+                  className="h-11 w-full rounded-xl text-sm font-semibold transition-all hover:scale-[1.01]"
                 >
-                  {loading ? "Creating..." : "Create Account"}
+                  {loading ? (
+                    "Creating account..."
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      Create Account
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
                 </Button>
               </motion.div>
             </motion.form>
 
-            <motion.p variants={item} className="text-center text-sm text-muted-foreground">
+            <motion.p
+              variants={item}
+              className="text-center text-sm text-muted-foreground"
+            >
               Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to="/login" className="font-medium text-primary hover:underline">
                 Login
               </Link>
             </motion.p>
           </CardContent>
         </Card>
       </motion.div>
-      <ToastContainer  autoClose={2000}/>
+
+      <ToastContainer autoClose={2000} />
     </div>
   );
 };

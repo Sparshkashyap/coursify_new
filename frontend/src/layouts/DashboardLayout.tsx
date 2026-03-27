@@ -31,6 +31,7 @@ import {
   Sun,
   Moon,
   ChevronRight,
+  UserCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -43,6 +44,7 @@ const studentLinks = [
   { title: "Certificates", url: "/student/certificates", icon: Award },
   { title: "Wishlist", url: "/student/wishlist", icon: Heart },
   { title: "AI Recommendation", url: "/student/ai-recommendation", icon: Sparkles },
+  { title: "Profile", url: "/profile", icon: UserCircle2 },
 ];
 
 const instructorLinks = [
@@ -51,6 +53,8 @@ const instructorLinks = [
   { title: "Earnings", url: "/instructor/earnings", icon: DollarSign },
   { title: "AI Generator", url: "/instructor/ai-generator", icon: Sparkles },
   { title: "Affiliates", url: "/instructor/affiliates", icon: Users },
+  { title: "Profile", url: "/profile", icon: UserCircle2 },
+  
 ];
 
 const adminLinks = [
@@ -59,6 +63,7 @@ const adminLinks = [
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Profile", url: "/profile", icon: UserCircle2 },
 ];
 
 function DashboardSidebar() {

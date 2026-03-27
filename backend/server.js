@@ -21,6 +21,7 @@ import studentAIRoutes from "./routes/studentAIRoutes.js";
 import certificateRoutes from "./routes/certificateRoutes.js";
 import courseAssistantRoutes from "./routes/courseAssistantRoutes.js";
 import subscriptionRoutes from './routes/subscriptionRoutes.js'
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use("/student-ai", studentAIRoutes);
 app.use("/certificates", certificateRoutes);
 app.use("/course-assistant", courseAssistantRoutes);
 app.use("/subscriptions", subscriptionRoutes);
+app.use("/users",userRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running...");
