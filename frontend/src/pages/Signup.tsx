@@ -85,6 +85,8 @@ const Signup: React.FC = () => {
       setLoading(true);
       const data = await signupUser(formData);
 
+       console.log("GOOGLE LOGIN API RESPONSE:", data);
+
       if (data.success) {
         toast.success("Account created successfully");
         setTimeout(() => navigate("/login"), 700);
@@ -106,6 +108,7 @@ const Signup: React.FC = () => {
       }
 
       const data = await googleLogin(credential);
+       console.log("GOOGLE LOGIN API RESPONSE:", data);
 
       if (data.success) {
         login(data.token, data.user);

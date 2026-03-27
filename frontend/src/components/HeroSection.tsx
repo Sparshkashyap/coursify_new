@@ -136,15 +136,32 @@ const HeroSection: React.FC = () => {
 
           .hero-title {
             font-family: "Space Grotesk", "Inter", sans-serif;
-            font-size: clamp(3.4rem, 7vw, 7rem);
-            line-height: 0.95;
+            font-size: clamp(3.6rem, 8vw, 8rem);
+            line-height: 0.88;
             letter-spacing: -0.045em;
             font-weight: 900;
             text-wrap: balance;
             text-rendering: optimizeLegibility;
+            max-width: 7.2ch;
+          }
+
+          .hero-title-line {
+            display: block;
+            white-space: nowrap;
+          }
+
+          .hero-title-solid {
+            display: inline-block;
+            color: hsl(var(--foreground));
+            text-shadow:
+              0 0 0.01px currentColor,
+              0 0 0.01px currentColor,
+              0.6px 0 0 currentColor,
+              -0.6px 0 0 currentColor;
           }
 
           .hero-gradient-text {
+            display: inline-block;
             background-image: linear-gradient(
               135deg,
               #4f46e5 0%,
@@ -161,6 +178,8 @@ const HeroSection: React.FC = () => {
             color: transparent;
             animation: gradientFlow 6.5s ease-in-out infinite;
             filter: saturate(1.08);
+            text-shadow: none;
+            padding-right: 0.04em;
           }
 
           .hero-gradient-btn {
@@ -324,6 +343,19 @@ const HeroSection: React.FC = () => {
             background: hsl(var(--background) / 0.76);
             backdrop-filter: blur(12px);
           }
+
+          @media (max-width: 640px) {
+            .hero-title {
+              font-size: clamp(2.9rem, 12vw, 4.4rem);
+              line-height: 0.9;
+              letter-spacing: -0.05em;
+              max-width: none;
+            }
+
+            .hero-title-line {
+              white-space: normal;
+            }
+          }
         `}
       </style>
 
@@ -342,8 +374,13 @@ const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-5">
-              <h1 className="hero-title max-w-4xl text-foreground">
-                Learn Without <span className="hero-gradient-text">Limits</span>
+              <h1 className="hero-title text-foreground">
+                <span className="hero-title-line hero-title-solid">
+                  Learn Without
+                </span>
+                <span className="hero-title-line">
+                  <span className="hero-gradient-text">Limits</span>
+                </span>
               </h1>
 
               <p className="hero-subtext">
@@ -426,9 +463,6 @@ const HeroSection: React.FC = () => {
                   className="hero-main-image"
                 />
               </div>
-
-            
-
 
               <div
                 className="hero-floating-card secondary bottom-8 left-5 z-20 max-w-[280px] p-4"
