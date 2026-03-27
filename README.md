@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./screenshoot/img.png" width="800"/>
+</p>
+
 # 🎓 Coursify – Learn Without Limits
 
 Coursify is a full-stack learning management platform where students can enroll in courses, instructors can create and manage courses, and admins can manage the entire platform. The platform includes authentication, payments, certificates, AI features, wishlist, and profile management.
