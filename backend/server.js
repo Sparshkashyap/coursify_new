@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -26,6 +27,15 @@ import userRoutes from './routes/userRoutes.js';
 const app = express();
 
 connectDB();
+
+app.use(helmet());
+
+// app.use(
+//   helmet({
+//     crossOriginEmbedderPolicy: false,
+//     contentSecurityPolicy: false,
+//   })
+// );
 
 app.use(
   cors({

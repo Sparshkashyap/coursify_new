@@ -61,6 +61,7 @@ import CookiePreferencesModal from "@/components/CookiePreferencesModal";
 import AnalyticsLoader from "@/components/AnalyticsLoader";
 
 import Profile from "@/pages/Profile";
+import RefundPolicy from "@/pages/RefundPolicy";
 
 
 const queryClient = new QueryClient();
@@ -97,6 +98,7 @@ const App = () => (
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/courses" element={<Courses />} />
+                    <Route path="/refund" element={<RefundPolicy />} />
                   </Route>
 
                   <Route element={<PrivateRoute allowedRoles={["student"]} />}>
