@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Star, Users, Tag, Clock3, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
   onDelete,
 }) => {
   const { isWishlisted, toggleWishlist } = useWishlist();
+
   const [toggling, setToggling] = useState(false);
+  const [optimisticWishlisted, setOptimisticWishlisted] = useState<
+    boolean | null
+  >(null);
 
   const courseId = course._id || course.id || "";
 
@@ -55,7 +59,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
     ? course.students.length
     : course.students || 0;
 
-  const wishlisted = courseId ? isWishlisted(courseId) : false;
+  const serverWishlisted = courseId ? isWishlisted(courseId) : false;
+
+  const wishlisted =
+    optimisticWishlisted !== null ? optimisticWishlisted : serverWishlisted;
+
+  useEffect(() => {
+    if (!toggling) {
+      setOptimisticWishlisted(null);
+    }
+  }, [serverWishlisted, toggling]);
 
   const handleWishlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -63,9 +76,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
     if (!courseId || toggling) return;
 
+    const previousValue = wishlisted;
+    const nextValue = !previousValue;
+
     try {
       setToggling(true);
+      setOptimisticWishlisted(nextValue); // instant UI update
       await toggleWishlist(courseId);
+    } catch (error) {
+      console.error("WISHLIST TOGGLE ERROR:", error);
+      setOptimisticWishlisted(previousValue); // rollback on error
     } finally {
       setToggling(false);
     }
@@ -87,16 +107,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
         <button
           onClick={handleWishlist}
-          disabled={toggling}
+          disabled={!courseId}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/85 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white disabled:opacity-60 dark:border-white/10 dark:bg-background/90 dark:hover:bg-background"
+          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/85 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-background/90 dark:hover:bg-background"
         >
           <Heart
-            className={`h-4 w-4 transition-colors ${
+            className={`h-4 w-4 transition-colors duration-200 ${
               wishlisted
                 ? "fill-destructive text-destructive"
                 : "text-muted-foreground"
-            }`}
+            } ${toggling ? "opacity-80" : ""}`}
           />
         </button>
 
@@ -135,7 +155,10 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </Link>
 
           <p className="truncate text-sm text-muted-foreground">
-            by <span className="font-medium text-foreground/90">{instructorName}</span>
+            by{" "}
+            <span className="font-medium text-foreground/90">
+              {instructorName}
+            </span>
           </p>
 
           {course.description && (
@@ -170,7 +193,10 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
 
           {course.level && (
-            <Badge variant="secondary" className="shrink-0 rounded-full px-2.5 py-1 text-[11px]">
+            <Badge
+              variant="secondary"
+              className="shrink-0 rounded-full px-2.5 py-1 text-[11px]"
+            >
               {course.level}
             </Badge>
           )}
@@ -179,18 +205,26 @@ const CourseCard: React.FC<CourseCardProps> = ({
         <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-background px-3 py-2">
             <Users className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{studentCount.toLocaleString()} students</span>
+            <span className="truncate">
+              {studentCount.toLocaleString()} students
+            </span>
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-background px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{course.duration || "Flexible access"}</span>
+            <span className="truncate">
+              {course.duration || "Flexible access"}
+            </span>
           </div>
 
           <div className="col-span-2 flex items-center gap-2 rounded-xl border border-border/70 bg-background px-3 py-2">
             <BookOpen className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">
-              {course.lessons ? `${course.lessons} lessons` : course.isFree ? "Direct enroll available" : "Secure payment"}
+              {course.lessons
+                ? `${course.lessons} lessons`
+                : course.isFree
+                ? "Direct enroll available"
+                : "Secure payment"}
             </span>
           </div>
         </div>
@@ -224,12 +258,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </div>
         )}
 
-        <Button className="h-10 w-full rounded-xl font-semibold" size="sm" asChild>
+        <Button
+          className="h-10 w-full rounded-xl font-semibold"
+          size="sm"
+          asChild
+        >
           <Link to={`/courses/${courseId}`}>View Course</Link>
         </Button>
       </CardContent>
     </Card>
-  );  
+  );
 };
 
 export default CourseCard;
