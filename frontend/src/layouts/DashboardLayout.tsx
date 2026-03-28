@@ -54,6 +54,8 @@ const instructorLinks = [
   { title: "AI Generator", url: "/instructor/ai-generator", icon: Sparkles },
   { title: "Affiliates", url: "/instructor/affiliates", icon: Users },
   { title: "Profile", url: "/profile", icon: UserCircle2 },
+   { title: "Wallet", url: "/instructor/wallet", icon: CreditCard },
+  { title: "Payouts", url: "/instructor/payouts", icon: DollarSign },
   
 ];
 
@@ -64,6 +66,9 @@ const adminLinks = [
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Settings", url: "/admin/settings", icon: Settings },
   { title: "Profile", url: "/profile", icon: UserCircle2 },
+  { title: "Revenue", url: "/admin/revenue", icon: DollarSign },
+  { title: "Payout Requests", url: "/admin/payout-requests", icon: CreditCard },
+
 ];
 
 function DashboardSidebar() {

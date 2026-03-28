@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import StatsCard from "@/components/dashboard/StatsCard";
 import EarningsChart from "@/components/dashboard/EarningsChart";
-import { getAdminOverview } from "@/api/adminApi";
+import { getAdminEarningsOverview } from "@/api/earningApi";
 import { toast, ToastContainer } from "react-toastify";
 
 const fadeUp = {
@@ -53,7 +53,7 @@ const AdminDashboard: React.FC = () => {
     const loadOverview = async () => {
       try {
         setLoading(true);
-        const data = await getAdminOverview();
+        const data = await getAdminEarningsOverview();
         setOverview(
           data.overview || {
             totalUsers: 0,
@@ -85,11 +85,10 @@ const AdminDashboard: React.FC = () => {
       <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Oversee users, roles, courses, revenue, and platform-level operations.
+          Oversee users, roles, courses, platform revenue, and key operations.
         </p>
       </motion.div>
 
-      {/* MAIN STATS */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
@@ -108,7 +107,7 @@ const AdminDashboard: React.FC = () => {
           icon={BookOpen}
         />
         <StatsCard
-          title="Total Revenue"
+          title="Platform Revenue"
           value={`₹${overview.totalRevenue.toLocaleString()}`}
           icon={DollarSign}
         />
@@ -119,13 +118,12 @@ const AdminDashboard: React.FC = () => {
         />
       </motion.div>
 
-      {/* ROLE STATS */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
         animate="visible"
         transition={{ delay: 0.08 }}
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatsCard
           title="Admins"
@@ -141,6 +139,11 @@ const AdminDashboard: React.FC = () => {
           title="Instructors"
           value={overview.totalInstructors.toLocaleString()}
           icon={UserCog}
+        />
+        <StatsCard
+          title="Paid Transactions"
+          value={overview.totalPayments.toLocaleString()}
+          icon={CreditCard}
         />
       </motion.div>
 
@@ -233,7 +236,7 @@ const AdminDashboard: React.FC = () => {
             <div className="flex-1">
               <h3 className="font-semibold">Platform Controls</h3>
               <p className="text-sm text-muted-foreground">
-                Manage users, courses, payments and global settings from dedicated admin pages.
+                Admin revenue here is platform commission, not full course sale amount.
               </p>
             </div>
             <Button asChild variant="outline" size="sm" className="gap-2">

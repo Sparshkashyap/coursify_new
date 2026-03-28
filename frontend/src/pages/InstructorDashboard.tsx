@@ -7,6 +7,7 @@ import {
   Trash2,
   Plus,
   Eye,
+  Wallet,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import EarningsChart from "@/components/dashboard/EarningsChart";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
 import API from "@/api/axios";
+import { getInstructorEarningsOverview } from "@/api/earningApi";
 
 interface Course {
   _id: string;
@@ -46,6 +48,8 @@ const InstructorDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [earningsLoading, setEarningsLoading] = useState(true);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
+  const [totalTransactions, setTotalTransactions] = useState(0);
   const [earningsData, setEarningsData] = useState<EarningsPoint[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,34 +68,17 @@ const InstructorDashboard: React.FC = () => {
     try {
       setEarningsLoading(true);
 
-      const res = await API.get("/instructor/earnings");
-      const data = res.data || {};
+      const data = await getInstructorEarningsOverview();
 
-      const resolvedTotalEarnings =
-        Number(data?.totalEarnings) ||
-        Number(data?.summary?.totalEarnings) ||
-        Number(data?.earnings?.totalEarnings) ||
-        0;
-
-      const resolvedChartData: EarningsPoint[] =
-        data?.chartData ||
-        data?.earningsChart ||
-        data?.monthlyEarnings ||
-        data?.summary?.chartData ||
-        [];
-
-      setTotalEarnings(resolvedTotalEarnings);
-      setEarningsData(
-        Array.isArray(resolvedChartData)
-          ? resolvedChartData.map((item: any) => ({
-              month: item.month || item.label || "N/A",
-              earnings: Number(item.earnings || item.amount || item.value || 0),
-            }))
-          : []
-      );
+      setTotalEarnings(Number(data?.totalEarnings || 0));
+      setTotalSales(Number(data?.totalSales || 0));
+      setTotalTransactions(Number(data?.totalTransactions || 0));
+      setEarningsData(Array.isArray(data?.chartData) ? data.chartData : []);
     } catch (err: any) {
       console.error("FETCH EARNINGS ERROR:", err?.response?.data || err);
       setTotalEarnings(0);
+      setTotalSales(0);
+      setTotalTransactions(0);
       setEarningsData([]);
       toast.error(
         err?.response?.data?.message || "Failed to load earnings data"
@@ -147,7 +134,7 @@ const InstructorDashboard: React.FC = () => {
             Instructor Dashboard
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage your courses, updates, and content from one place.
+            Manage your courses, sales, and earnings from one place.
           </p>
         </div>
 
@@ -167,14 +154,19 @@ const InstructorDashboard: React.FC = () => {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatsCard title="Total Students" value={totalStudents} icon={Users} />
         <StatsCard title="Courses" value={courses.length} icon={BookOpen} />
         <StatsCard
           title="Earnings"
-          value={earningsLoading ? "Loading..." : `₹${totalEarnings}`}
+          value={earningsLoading ? "Loading..." : `₹${totalEarnings.toLocaleString()}`}
           icon={DollarSign}
+        />
+        <StatsCard
+          title="Sales"
+          value={earningsLoading ? "Loading..." : `₹${totalSales.toLocaleString()}`}
+          icon={Wallet}
         />
       </motion.div>
 
@@ -188,6 +180,41 @@ const InstructorDashboard: React.FC = () => {
           <EarningsChart data={earningsData} />
         </motion.div>
       )}
+
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.46, delay: 0.09 }}
+        className="grid gap-4 md:grid-cols-3"
+      >
+        <Card className="rounded-3xl border-border bg-card">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Total Transactions</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              {earningsLoading ? "..." : totalTransactions}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-border bg-card">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Platform Model</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              Revenue Share
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-border bg-card">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">Status</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              Active
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <motion.div
         variants={fadeUp}

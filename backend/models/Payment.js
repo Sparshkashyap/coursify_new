@@ -53,6 +53,24 @@ const paymentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    platformFeeRate: {
+      type: Number,
+      default: 20,
+    },
+    platformFeeAmount: {
+      type: Number,
+      default: 0,
+    },
+    adminNetRevenueAmount: {
+      type: Number,
+      default: 0,
+    },
+    instructorEarningAmount: {
+      type: Number,
+      default: 0,
+    },
+
     refundStatus: {
       type: String,
       enum: ["none", "requested", "processed"],

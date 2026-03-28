@@ -4,16 +4,37 @@ import Course from "../models/Course.js";
 import Payment from "../models/Payment.js";
 import Enrollment from "../models/Enrollment.js";
 import Affiliate from "../models/Affiliate.js";
+import Wallet from "../models/Wallet.js";
+import { calculateCommissionBreakdown } from "../utils/commisonCalculator.js";
 
 const getUserId = (req) => req.user?._id || req.user?.id;
+
+const getPlatformFeeRate = () => {
+  const parsed = Number(process.env.PLATFORM_COMMISSION_PERCENT);
+  if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) return parsed;
+  return 20;
+};
+
+const getOrCreateWallet = async (instructorId) => {
+  let wallet = await Wallet.findOne({ instructor: instructorId });
+
+  if (!wallet) {
+    wallet = await Wallet.create({
+      instructor: instructorId,
+      totalEarnings: 0,
+      availableBalance: 0,
+      pendingPayout: 0,
+      totalWithdrawn: 0,
+    });
+  }
+
+  return wallet;
+};
 
 export const createRazorpayOrder = async (req, res) => {
   try {
     const { courseId, affiliateCode = "" } = req.body;
     const studentId = getUserId(req);
-
-    console.log("CREATE ORDER BODY:", req.body);
-    console.log("CREATE ORDER USER:", req.user);
 
     if (!studentId) {
       return res.status(401).json({
@@ -55,6 +76,7 @@ export const createRazorpayOrder = async (req, res) => {
     const existingEnrollment = await Enrollment.findOne({
       student: studentId,
       course: courseId,
+      status: "active",
     });
 
     if (existingEnrollment) {
@@ -98,6 +120,7 @@ export const createRazorpayOrder = async (req, res) => {
       razorpayOrderId: order.id,
       affiliateCode: affiliateCode || "",
       status: "created",
+      platformFeeRate: getPlatformFeeRate(),
     });
 
     return res.json({
@@ -135,9 +158,6 @@ export const verifyRazorpayPayment = async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
     } = req.body;
-
-    console.log("VERIFY PAYMENT BODY:", req.body);
-    console.log("VERIFY PAYMENT USER:", req.user);
 
     if (!studentId) {
       return res.status(401).json({
@@ -186,6 +206,8 @@ export const verifyRazorpayPayment = async (req, res) => {
     payment.status = "paid";
     payment.paidAt = new Date();
 
+    let affiliateCommission = 0;
+
     if (payment.affiliateCode) {
       const affiliate = await Affiliate.findOne({
         code: payment.affiliateCode,
@@ -193,17 +215,41 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
 
       if (affiliate) {
-        const commission = Math.round(
-          (payment.amount * affiliate.commissionRate) / 100
+        affiliateCommission = Number(
+          ((payment.amount * affiliate.commissionRate) / 100).toFixed(2)
         );
-        payment.commissionAmount = commission;
+
+        payment.commissionAmount = affiliateCommission;
         affiliate.totalConversions += 1;
-        affiliate.totalCommission += commission;
+        affiliate.totalCommission += affiliateCommission;
         await affiliate.save();
       }
     }
 
+    const breakdown = calculateCommissionBreakdown({
+      amount: payment.amount,
+      platformFeeRate: Number(payment.platformFeeRate) || getPlatformFeeRate(),
+      affiliateCommission,
+    });
+
+    payment.platformFeeRate = breakdown.platformFeeRate;
+    payment.platformFeeAmount = breakdown.platformFeeAmount;
+    payment.instructorEarningAmount = breakdown.instructorEarningAmount;
+    payment.adminNetRevenueAmount = breakdown.adminNetRevenueAmount;
+
     await payment.save();
+
+    const wallet = await getOrCreateWallet(payment.instructor);
+
+    wallet.totalEarnings = Number(
+      (wallet.totalEarnings + payment.instructorEarningAmount).toFixed(2)
+    );
+
+    wallet.availableBalance = Number(
+      (wallet.availableBalance + payment.instructorEarningAmount).toFixed(2)
+    );
+
+    await wallet.save();
 
     const existingEnrollment = await Enrollment.findOne({
       student: studentId,
@@ -238,6 +284,7 @@ export const verifyRazorpayPayment = async (req, res) => {
     return res.json({
       success: true,
       message: "Payment verified and enrollment created",
+      earnings: breakdown,
     });
   } catch (err) {
     console.error("VERIFY PAYMENT ERROR FULL:", err);

@@ -63,6 +63,11 @@ import AnalyticsLoader from "@/components/AnalyticsLoader";
 import Profile from "@/pages/Profile";
 import RefundPolicy from "@/pages/RefundPolicy";
 
+import InstructorWallet from "@/pages/instructor/InstructorWallet";
+import InstructorPayout from "@/pages/instructor/InstructorPayouts";
+import AdminRevenue from "@/pages/admin/AdminRevenue";
+import AdminPayoutRequests from "@/pages/admin/AdminPayoutRequests";
+
 
 const queryClient = new QueryClient();
 
@@ -121,6 +126,8 @@ const App = () => (
                       <Route path="/instructor/earnings" element={<InstructorEarnings />} />
                       <Route path="/instructor/ai-generator" element={<InstructorAIGenerator />} />
                       <Route path="/instructor/affiliates" element={<InstructorAffiliates />} />
+                      <Route path="/instructor/wallet" element={<InstructorWallet />} />
+                      <Route path="/instructor/payouts" element={<InstructorPayout />} />
                     </Route>
                   </Route>
 
@@ -131,6 +138,9 @@ const App = () => (
                       <Route path="/admin/courses" element={<AdminCourses />} />
                       <Route path="/admin/payments" element={<AdminPayments />} />
                       <Route path="/admin/settings" element={<AdminSettings />} />
+                      <Route path="/admin/revenue" element={<AdminRevenue />} />
+                      <Route path="/admin/payout-requests" element={<AdminPayoutRequests />} />
+                      
                     </Route>
                   </Route>
 

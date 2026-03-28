@@ -9,7 +9,9 @@ interface WishlistContextType {
   refreshWishlist: () => Promise<void>;
 }
 
-const WishlistContext = createContext<WishlistContextType>({} as WishlistContextType);
+const WishlistContext = createContext<WishlistContextType>(
+  {} as WishlistContextType
+);
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -17,10 +19,20 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const getStoredUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  };
+
   const refreshWishlist = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
+      const user = getStoredUser();
+
+      if (!token || !user || user.role !== "student") {
         setWishlist([]);
         setLoading(false);
         return;
@@ -43,7 +55,9 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const toggleWishlist = async (courseId: string) => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    const user = getStoredUser();
+
+    if (!token || !user || user.role !== "student") return;
 
     await toggleWishlistCourse(courseId);
     await refreshWishlist();

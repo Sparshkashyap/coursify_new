@@ -21,8 +21,12 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import studentAIRoutes from "./routes/studentAIRoutes.js";
 import certificateRoutes from "./routes/certificateRoutes.js";
 import courseAssistantRoutes from "./routes/courseAssistantRoutes.js";
-import subscriptionRoutes from './routes/subscriptionRoutes.js'
-import userRoutes from './routes/userRoutes.js';
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import earningRoutes from "./routes/earningRoutes.js";
+import payoutRoutes from "./routes/payoutRoutes.js";
+import refundRoutes from "./routes/refundRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
@@ -30,16 +34,23 @@ connectDB();
 
 app.use(helmet());
 
-// app.use(
-//   helmet({
-//     crossOriginEmbedderPolicy: false,
-//     contentSecurityPolicy: false,
-//   })
-// );
+const allowedOrigins = [
+  "http://localhost:8080",
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "*",
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -53,6 +64,10 @@ app.use("/newsletter", newsletterRoutes);
 app.use("/courses", courseRoutes);
 app.use("/uploads", uploadRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/earnings", earningRoutes);
+app.use("/payouts", payoutRoutes);
+app.use("/refunds", refundRoutes);
+app.use("/admin", adminRoutes);
 app.use("/instructor", instructorRoutes);
 app.use("/affiliates", affiliateRoutes);
 app.use("/ai", aiRoutes);
@@ -64,7 +79,7 @@ app.use("/student-ai", studentAIRoutes);
 app.use("/certificates", certificateRoutes);
 app.use("/course-assistant", courseAssistantRoutes);
 app.use("/subscriptions", subscriptionRoutes);
-app.use("/users",userRoutes);
+app.use("/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running...");
