@@ -144,7 +144,7 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const resetUrl = `http://localhost:8080/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
     // ⭐ generate HTML email
     const html = resetPasswordTemplate(resetUrl, user.name);
