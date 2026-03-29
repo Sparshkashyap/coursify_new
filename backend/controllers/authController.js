@@ -6,72 +6,58 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { resetPasswordTemplate } from "../emails/resetPasswordTemplate.js";
 import { OAuth2Client } from "google-auth-library";
 
-
-
 /* =========================
    SIGNUP
 ========================= */
+export const signup = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
 
-export const signup = async (req,res)=>{
-
-  try{
-
-    const { name,email,password,role } = req.body;
-
-    if(!name || !email || !password){
+    if (!name || !email || !password) {
       return res.status(400).json({
-        success:false,
-        message:"All fields are required"
+        success: false,
+        message: "All fields are required",
       });
     }
 
-    const userExists = await User.findOne({email});
+    const userExists = await User.findOne({ email });
 
-    if(userExists){
+    if (userExists) {
       return res.status(400).json({
-        success:false,
-        message:"User already exists"
+        success: false,
+        message: "User already exists",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password,10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const allowedRole =
-      role === "instructor" ? "instructor" : "student";
+    const allowedRole = role === "instructor" ? "instructor" : "student";
 
-    const user = await User.create({
+    await User.create({
       name,
       email,
-      password:hashedPassword,
-      role:allowedRole || "student"
+      password: hashedPassword,
+      role: allowedRole || "student",
     });
 
     res.status(201).json({
-      success:true,
-      message:"User created successfully"
+      success: true,
+      message: "User created successfully",
     });
-
-  }catch(error){
-
+  } catch (error) {
+    console.error("SIGNUP ERROR:", error);
     res.status(500).json({
-      success:false,
-      message:"Server error"
+      success: false,
+      message: "Server error",
     });
-
   }
-
 };
-
-
 
 /* =========================
    LOGIN
 ========================= */
-
 export const login = async (req, res) => {
-
   try {
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -79,7 +65,15 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials"
+        message: "Invalid credentials",
+      });
+    }
+
+    const hasPassword = !!user.password;
+    if (!hasPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "This account was created with Google. Please login with Google or set a password using forgot password.",
       });
     }
 
@@ -88,7 +82,7 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials"
+        message: "Invalid credentials",
       });
     }
 
@@ -102,38 +96,39 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+        avatar: user.avatar || "",
+      },
     });
-
   } catch (error) {
-
+    console.error("LOGIN ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error",
     });
-
   }
 };
-
-
 
 /* =========================
    FORGOT PASSWORD
 ========================= */
-
 export const forgotPassword = async (req, res) => {
-
   try {
-
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -144,106 +139,102 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const baseUrl = process.env.CLIENT_URL?.replace(/\/$/, "") || "http://localhost:8080";
+    const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
-    // ⭐ generate HTML email
     const html = resetPasswordTemplate(resetUrl, user.name);
 
-    // ⭐ send email
-    await sendEmail({
-      to: user.email,
-      subject: "Reset Your Password",
-      html
-    });
-
+    // Response first for better UX
     res.json({
       success: true,
-      message: "Password reset link sent to your email"
+      message: "Password reset link sent to your email",
     });
 
+    // Email send in background
+    sendEmail({
+      to: user.email,
+      subject: "Reset Your Password",
+      html,
+    }).catch(async (error) => {
+      console.error("BACKGROUND EMAIL SEND ERROR:", error);
+
+      try {
+        user.resetPasswordToken = "";
+        user.resetPasswordExpire = null;
+        await user.save();
+      } catch (saveError) {
+        console.error("FAILED TO CLEAN RESET TOKEN:", saveError);
+      }
+    });
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
+    console.error("FORGOT PASSWORD ERROR:", error);
+    return res.status(500).json({
       success: false,
-      message: "Error sending email"
+      message: "Error sending email",
     });
-
   }
-
 };
-
-
 
 /* =========================
    RESET PASSWORD
 ========================= */
-
 export const resetPassword = async (req, res) => {
-
   try {
-
     const { token } = req.params;
     const { password } = req.body;
-   
-   
-    const user = await User.findOne({
 
-     resetPasswordToken: token,
-     resetPasswordExpire: { $gt: Date.now() }
-     
-
-    });
- 
-    // console.log(user);
-
-    if (!user) {
-       
+    if (!password?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired token"
+        message: "Password is required",
       });
-     
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired token",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    user.resetPasswordToken = "";
+    user.resetPasswordExpire = null;
 
     await user.save();
 
     res.json({
       success: true,
-      message: "Password reset successful"
+      message: "Password reset successful",
     });
-
   } catch (error) {
-  console.error(err);
+    console.error("RESET PASSWORD ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error",
     });
-
   }
-
 };
 
-
-
-//GOOGLE O AUTH
+/* =========================
+   GOOGLE OAUTH
+========================= */
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-export const googleLogin = async (req,res)=>{
 
-  try{
-
+export const googleLogin = async (req, res) => {
+  try {
     const { token } = req.body;
 
     const ticket = await client.verifyIdToken({
       idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -252,39 +243,27 @@ export const googleLogin = async (req,res)=>{
 
     let user = await User.findOne({ email });
 
-    if(!user){
-
+    if (!user) {
       user = await User.create({
         name,
         email,
         googleId: sub,
-        avatar: picture
+        avatar: picture,
       });
-
     }
 
     const jwtToken = generateToken(user._id);
 
     res.json({
-      success:true,
-      token:jwtToken,
-      user
+      success: true,
+      token: jwtToken,
+      user,
     });
-
-  }catch(error){
-
-    console.error(error);
-
+  } catch (error) {
+    console.error("GOOGLE LOGIN ERROR:", error);
     res.status(500).json({
-      success:false,
-      message:"Google login failed"
+      success: false,
+      message: "Google login failed",
     });
-
   }
-
 };
-
-
-
-
-
