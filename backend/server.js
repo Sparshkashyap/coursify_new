@@ -7,7 +7,6 @@ dotenv.config();
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
-import newsletterRoutes from "./routes/newsletterRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -27,6 +26,7 @@ import earningRoutes from "./routes/earningRoutes.js";
 import payoutRoutes from "./routes/payoutRoutes.js";
 import refundRoutes from "./routes/refundRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import newsletterRoutes from "./routes/newsletterRoutes.js";
 
 const app = express();
 
@@ -80,6 +80,9 @@ app.use("/certificates", certificateRoutes);
 app.use("/course-assistant", courseAssistantRoutes);
 app.use("/subscriptions", subscriptionRoutes);
 app.use("/users", userRoutes);
+app.use("/newsletter", newsletterRoutes);
+
+
 
 app.get("/", (req, res) => {
   res.send("API running...");

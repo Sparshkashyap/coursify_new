@@ -1,41 +1,43 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
 
-  // basic validation
   if (!name || !email || !message) {
-    return res.status(400).json({ success: false, msg: "All fields required" });
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER, // safer than using user input
-      to: process.env.EMAIL_USER,  // 👈 coursify owner email
-      subject: "New Contact Message",
-      text: `
-Name: ${name}
-Email: ${email}
-Message: ${message}
+    await sendEmail({
+      to: process.env.EMAIL_FROM, // admin email
+      subject: "New Contact Message - Coursify",
+      html: `
+        <div style="font-family: Arial; padding:20px;">
+          <h2>New Contact Message</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message}</p>
+        </div>
       `,
     });
 
-    res.json({ success: true });
-
+    res.json({
+      success: true,
+      message: "Message sent successfully",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false });
+    console.error("CONTACT EMAIL ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send message",
+    });
   }
 });
 

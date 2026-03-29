@@ -30,12 +30,16 @@ const NewsletterCTA: React.FC = () => {
       );
 
       if (res.data.success) {
-        toast.success("Subscribed successfully!");
+        toast.success(res.data.message || "Subscribed successfully!");
         setEmail("");
       }
-
     } catch (error: any) {
-      toast.error("Subscription failed");
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.msg ||
+        "Subscription failed";
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -44,14 +48,12 @@ const NewsletterCTA: React.FC = () => {
   return (
     <section className="py-20">
       <div className="container">
-
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 p-10 text-center text-primary-foreground lg:p-16"
         >
-
           <h2 className="font-display text-3xl font-bold sm:text-4xl">
             Stay Ahead of the Curve
           </h2>
@@ -69,7 +71,7 @@ const NewsletterCTA: React.FC = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-primary-foreground/20 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/60"
+              className="border-primary-foreground/30 bg-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60"
             />
 
             <Button
@@ -82,11 +84,7 @@ const NewsletterCTA: React.FC = () => {
               <Send className="h-4 w-4" />
             </Button>
           </form>
-
         </motion.div>
-
-              {/* your routes / layout */}
-  <ToastContainer position="top-right" autoClose={2000} />
 
       </div>
     </section>

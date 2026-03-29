@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import razorpay from "../config/razorpay.js";
 import Subscription from "../models/Subscription.js";
+import User from "../models/User.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const getUserId = (req) => req.user?._id || req.user?.id;
 
@@ -10,19 +12,46 @@ const PLAN_PRICING = {
     yearly: 0,
   },
   pro: {
-    monthly: 1900,   // ₹19.00 equivalent if you want demo values
-    yearly: 19000,   // ₹190.00
+    monthly: 1900,
+    yearly: 19000,
   },
   premium: {
-    monthly: 4900,   // ₹49.00
-    yearly: 49000,   // ₹490.00
+    monthly: 4900,
+    yearly: 49000,
   },
 };
 
-// If you want real rupee values instead, use:
-// pro monthly 1900 => ₹19
-// premium monthly 4900 => ₹49
-// Razorpay amount is in paise.
+const getSubscriptionEmailTemplate = ({ name, plan, billingCycle, endsAt }) => {
+  return `
+    <div style="font-family: Arial, sans-serif; background:#f8fafc; padding:32px;">
+      <div style="max-width:600px; margin:auto; background:#ffffff; padding:32px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+        <h2 style="margin:0 0 16px; color:#111827;">Subscription Activated</h2>
+        <p style="color:#4b5563; line-height:1.7;">
+          Hello ${name || "there"},
+        </p>
+        <p style="color:#4b5563; line-height:1.7;">
+          Your <strong>${plan}</strong> subscription has been activated successfully.
+        </p>
+        <p style="color:#4b5563; line-height:1.7;">
+          Billing cycle: <strong>${billingCycle}</strong>
+        </p>
+        ${
+          endsAt
+            ? `<p style="color:#4b5563; line-height:1.7;">
+                 Valid until: <strong>${new Date(endsAt).toLocaleDateString()}</strong>
+               </p>`
+            : ""
+        }
+        <p style="color:#4b5563; line-height:1.7;">
+          Thank you for choosing Coursify.
+        </p>
+        <p style="margin-top:24px; color:#6b7280; font-size:14px;">
+          Team Coursify
+        </p>
+      </div>
+    </div>
+  `;
+};
 
 export const getPlans = async (req, res) => {
   try {
@@ -66,6 +95,13 @@ export const createSubscriptionOrder = async (req, res) => {
     const userId = getUserId(req);
     const { plan, billingCycle } = req.body;
 
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+
     if (!plan || !billingCycle) {
       return res.status(400).json({
         success: false,
@@ -97,7 +133,7 @@ export const createSubscriptionOrder = async (req, res) => {
       });
 
       if (!existingFree) {
-        await Subscription.create({
+        const freeSubscription = await Subscription.create({
           user: userId,
           plan: "free",
           billingCycle,
@@ -107,12 +143,36 @@ export const createSubscriptionOrder = async (req, res) => {
           endsAt: null,
           provider: "razorpay",
         });
+
+        const user = await User.findById(userId);
+
+        if (user?.email) {
+          sendEmail({
+            to: user.email,
+            subject: "Free Plan Activated",
+            html: getSubscriptionEmailTemplate({
+              name: user.name,
+              plan: "Free",
+              billingCycle,
+              endsAt: null,
+            }),
+          }).catch((err) => {
+            console.error("FREE SUBSCRIPTION EMAIL ERROR:", err);
+          });
+        }
+
+        return res.json({
+          success: true,
+          freePlan: true,
+          message: "Free plan activated",
+          subscription: freeSubscription,
+        });
       }
 
       return res.json({
         success: true,
         freePlan: true,
-        message: "Free plan activated",
+        message: "Free plan already active",
       });
     }
 
@@ -219,6 +279,23 @@ export const verifySubscriptionPayment = async (req, res) => {
 
     await subscription.save();
 
+    const user = await User.findById(subscription.user);
+
+    if (user?.email) {
+      sendEmail({
+        to: user.email,
+        subject: "Subscription Activated",
+        html: getSubscriptionEmailTemplate({
+          name: user.name,
+          plan: subscription.plan,
+          billingCycle: subscription.billingCycle,
+          endsAt: subscription.endsAt,
+        }),
+      }).catch((err) => {
+        console.error("SUBSCRIPTION EMAIL ERROR:", err);
+      });
+    }
+
     return res.json({
       success: true,
       message: "Subscription activated successfully",
@@ -236,6 +313,13 @@ export const verifySubscriptionPayment = async (req, res) => {
 export const getMySubscription = async (req, res) => {
   try {
     const userId = getUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
 
     const subscription = await Subscription.findOne({
       user: userId,
