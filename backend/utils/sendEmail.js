@@ -1,42 +1,48 @@
-import nodemailer from "nodemailer";
+import SibApiV3Sdk from "sib-api-v3-sdk";
 
-let transporter;
+let apiInstance = null;
 
-const getTransporter = () => {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+const getBrevoClient = () => {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY missing in environment variables");
   }
 
-  return transporter;
+  if (!apiInstance) {
+    const client = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = client.authentications["api-key"];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
+    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  }
+
+  return apiInstance;
 };
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+    console.log("BREVO_API_KEY exists:", !!process.env.BREVO_API_KEY);
+    console.log("EMAIL_FROM:", process.env.EMAIL_FROM);
     console.log("Sending email to:", to);
 
-    const transporterInstance = getTransporter();
+    const api = getBrevoClient();
 
-    await transporterInstance.verify();
-    console.log("SMTP connection verified successfully");
-
-    const mailOptions = {
-      from: `"Coursify" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
+    const sendSmtpEmail = {
+      sender: {
+        email: process.env.EMAIL_FROM,
+        name: "Coursify",
+      },
+      to: [
+        {
+          email: to,
+        },
+      ],
+      subject: subject,
+      htmlContent: html,
     };
 
-    const info = await transporterInstance.sendMail(mailOptions);
-    console.log("Email sent successfully:", info.messageId);
-    return info;
+    const data = await api.sendTransacEmail(sendSmtpEmail);
+
+    console.log("Email sent successfully:", data);
+    return data;
   } catch (error) {
     console.error("Email sending failed:", error);
     throw error;

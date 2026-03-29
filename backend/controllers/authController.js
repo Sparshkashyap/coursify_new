@@ -73,7 +73,8 @@ export const login = async (req, res) => {
     if (!hasPassword) {
       return res.status(400).json({
         success: false,
-        message: "This account was created with Google. Please login with Google or set a password using forgot password.",
+        message:
+          "This account was created with Google. Please login with Google or set a password using forgot password.",
       });
     }
 
@@ -139,18 +140,18 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const baseUrl = process.env.CLIENT_URL?.replace(/\/$/, "") || "http://localhost:8080";
-    const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
+    const baseUrl =
+      process.env.CLIENT_URL?.replace(/\/$/, "") ||
+      "http://localhost:8080";
 
+    const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
     const html = resetPasswordTemplate(resetUrl, user.name);
 
-    // Response first for better UX
     res.json({
       success: true,
       message: "Password reset link sent to your email",
     });
 
-    // Email send in background
     sendEmail({
       to: user.email,
       subject: "Reset Your Password",
@@ -238,7 +239,6 @@ export const googleLogin = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-
     const { email, name, picture, sub } = payload;
 
     let user = await User.findOne({ email });
