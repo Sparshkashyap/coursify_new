@@ -161,7 +161,7 @@ const Footer = () => {
                   className="flex items-start gap-3 rounded-2xl border bg-background/70 p-3 transition-colors hover:border-primary/30 hover:text-foreground"
                 >
                   <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span className="break-all">supportCoursify@gmail.com</span>
+                  <span className="break-all">supportcoursify655@gmail.com</span>
                 </a>
 
                 <a
