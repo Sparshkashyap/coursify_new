@@ -5,10 +5,11 @@ import generateToken from "../utils/generateToken.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { resetPasswordTemplate } from "../emails/resetPasswordTemplate.js";
 import { OAuth2Client } from "google-auth-library";
-
+import { queueEmail } from "../jobs/emailJobs.js";
 /* =========================
    SIGNUP
 ========================= */
+
 export const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -152,7 +153,7 @@ export const forgotPassword = async (req, res) => {
       message: "Password reset link sent to your email",
     });
 
-    sendEmail({
+   await queueEmail({
       to: user.email,
       subject: "Reset Your Password",
       html,

@@ -4,6 +4,9 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Worker ko server ke sath hi start kara do
+import "./workers/emailWorker.js";
+
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
@@ -80,9 +83,6 @@ app.use("/certificates", certificateRoutes);
 app.use("/course-assistant", courseAssistantRoutes);
 app.use("/subscriptions", subscriptionRoutes);
 app.use("/users", userRoutes);
-app.use("/newsletter", newsletterRoutes);
-
-
 
 app.get("/", (req, res) => {
   res.send("API running...");

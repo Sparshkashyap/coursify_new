@@ -1,5 +1,6 @@
 import express from "express";
 import { sendEmail } from "../utils/sendEmail.js";
+import { queueEmail } from "../jobs/emailJobs.js";
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    await sendEmail({
+    await queueEmail({
       to: process.env.EMAIL_FROM, // admin email
       subject: "New Contact Message - Coursify",
       html: `

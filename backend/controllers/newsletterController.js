@@ -1,5 +1,6 @@
 import Newsletter from "../models/Newsletter.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { queueEmail } from "../jobs/emailJobs.js";
 
 export const subscribeNewsletter = async (req, res) => {
   try {
@@ -33,7 +34,7 @@ export const subscribeNewsletter = async (req, res) => {
     });
 
     // send email in background
-    sendEmail({
+    await queueEmail({
       to: email,
       subject: "Welcome to Coursify Newsletter",
       html: `

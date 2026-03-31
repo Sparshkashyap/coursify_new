@@ -3,6 +3,7 @@ import razorpay from "../config/razorpay.js";
 import Subscription from "../models/Subscription.js";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { queueEmail } from "../jobs/emailJobs.js";
 
 const getUserId = (req) => req.user?._id || req.user?.id;
 
@@ -147,7 +148,7 @@ export const createSubscriptionOrder = async (req, res) => {
         const user = await User.findById(userId);
 
         if (user?.email) {
-          sendEmail({
+          await queueEmail({
             to: user.email,
             subject: "Free Plan Activated",
             html: getSubscriptionEmailTemplate({
@@ -282,7 +283,7 @@ export const verifySubscriptionPayment = async (req, res) => {
     const user = await User.findById(subscription.user);
 
     if (user?.email) {
-      sendEmail({
+      await queueEmail({
         to: user.email,
         subject: "Subscription Activated",
         html: getSubscriptionEmailTemplate({

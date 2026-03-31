@@ -1,4 +1,6 @@
 import SibApiV3Sdk from "sib-api-v3-sdk";
+import dotenv from "dotenv";
+dotenv.config();
 
 let apiInstance = null;
 
