@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastContainer } from "react-toastify";
+import { AnimatePresence } from "framer-motion";
 import "react-toastify/dist/ReactToastify.css";
 
 import StudentAIRecommendation from "@/pages/student/StudentAIRecommendation";
@@ -57,19 +58,116 @@ import CertificateView from "@/pages/student/CertificateView";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import CookiePreferencesModal from "@/components/CookiePreferencesModal";
 
-
 import AnalyticsLoader from "@/components/AnalyticsLoader";
 
 import Profile from "@/pages/Profile";
 import RefundPolicy from "@/pages/RefundPolicy";
 
-import InstructorWallet from "@/pages/instructor/InstructorWallet";
-import InstructorPayout from "@/pages/instructor/InstructorPayouts";
-import AdminRevenue from "@/pages/admin/AdminRevenue";
-import AdminPayoutRequests from "@/pages/admin/AdminPayoutRequests";
-
+import AppSplashScreen from "@/components/AppSplashScreen";
+import PageTransition from "@/components/PageTransition";
+import useAppLoader from "@/hooks/useAppLoader";
 
 const queryClient = new QueryClient();
+
+const AnimatedAppRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <PageTransition key={location.pathname}>
+        <Routes location={location}>
+          <Route element={<PublicRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+            </Route>
+          </Route>
+
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/refund" element={<RefundPolicy />} />
+          </Route>
+
+          <Route element={<PrivateRoute allowedRoles={["student"]} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/student" element={<StudentDashboard />} />
+              <Route path="/student/courses" element={<StudentCourses />} />
+              <Route path="/student/certificates" element={<StudentCertificates />} />
+              <Route path="/student/wishlist" element={<StudentWishlist />} />
+              <Route path="/student/ai-recommendation" element={<StudentAIRecommendation />} />
+              <Route path="/certificate/:id" element={<CertificateView />} />
+            </Route>
+          </Route>
+
+          <Route element={<PrivateRoute allowedRoles={["instructor"]} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/instructor" element={<InstructorDashboard />} />
+              <Route path="/instructor/add-course" element={<AddCourse />} />
+              <Route path="/instructor/edit-course/:id" element={<AddCourse />} />
+              <Route path="/instructor/courses" element={<InstructorCourses />} />
+              <Route path="/instructor/earnings" element={<InstructorEarnings />} />
+              <Route path="/instructor/ai-generator" element={<InstructorAIGenerator />} />
+              <Route path="/instructor/affiliates" element={<InstructorAffiliates />} />
+            </Route>
+          </Route>
+
+          <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/courses" element={<AdminCourses />} />
+              <Route path="/admin/payments" element={<AdminPayments />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+            </Route>
+          </Route>
+
+          <Route
+            element={
+              <PrivateRoute allowedRoles={["student", "instructor", "admin"]} />
+            }
+          >
+            <Route element={<DashboardLayout />}>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/courses/:id" element={<CourseDetail />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageTransition>
+    </AnimatePresence>
+  );
+};
+
+const AppContent = () => {
+  const loading = useAppLoader(2200);
+
+  return (
+    <>
+      <AnimatePresence>{loading && <AppSplashScreen />}</AnimatePresence>
+
+      {!loading && (
+        <>
+          <AffiliateTracker />
+          <AnalyticsLoader />
+          <CookieConsentBanner />
+          <CookiePreferencesModal />
+          <AnimatedAppRoutes />
+          <ToastContainer position="top-right" autoClose={2000} />
+        </>
+      )}
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -79,87 +177,7 @@ const App = () => (
           <CookieConsentProvider>
             <TooltipProvider>
               <BrowserRouter>
-                <AffiliateTracker />
-                <AnalyticsLoader/>
-                <CookieConsentBanner />
-                <CookiePreferencesModal />
-
-                <Routes>
-                  <Route element={<PublicRoute />}>
-                    <Route element={<MainLayout />}>
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/signup" element={<Signup />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/reset-password/:token" element={<ResetPassword />} />
-                    </Route>
-                  </Route>
-
-                  <Route element={<MainLayout />}>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/pricing" element={<Pricing />} />
-                    <Route path="/courses" element={<Courses />} />
-                    <Route path="/refund" element={<RefundPolicy />} />
-                  </Route>
-
-                  <Route element={<PrivateRoute allowedRoles={["student"]} />}>
-                    <Route element={<DashboardLayout />}>
-                      <Route path="/student" element={<StudentDashboard />} />
-                      <Route path="/student/courses" element={<StudentCourses />} />
-                      <Route path="/student/certificates" element={<StudentCertificates />} />
-                      <Route path="/student/wishlist" element={<StudentWishlist />} />
-                      <Route path="/student/ai-recommendation" element={<StudentAIRecommendation />} />
-                      <Route path="/certificate/:id" element={<CertificateView />} />
-                    </Route>
-                  </Route>
-
-                  <Route element={<PrivateRoute allowedRoles={["instructor"]} />}>
-                    <Route element={<DashboardLayout />}>
-                      <Route path="/instructor" element={<InstructorDashboard />} />
-                      <Route path="/instructor/add-course" element={<AddCourse />} />
-                      <Route path="/instructor/edit-course/:id" element={<AddCourse />} />
-                      <Route path="/instructor/courses" element={<InstructorCourses />} />
-                      <Route path="/instructor/earnings" element={<InstructorEarnings />} />
-                      <Route path="/instructor/ai-generator" element={<InstructorAIGenerator />} />
-                      <Route path="/instructor/affiliates" element={<InstructorAffiliates />} />
-                      <Route path="/instructor/wallet" element={<InstructorWallet />} />
-                      <Route path="/instructor/payouts" element={<InstructorPayout />} />
-                    </Route>
-                  </Route>
-
-                  <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
-                    <Route element={<DashboardLayout />}>
-                      <Route path="/admin" element={<AdminDashboard />} />
-                      <Route path="/admin/users" element={<AdminUsers />} />
-                      <Route path="/admin/courses" element={<AdminCourses />} />
-                      <Route path="/admin/payments" element={<AdminPayments />} />
-                      <Route path="/admin/settings" element={<AdminSettings />} />
-                      <Route path="/admin/revenue" element={<AdminRevenue />} />
-                      <Route path="/admin/payout-requests" element={<AdminPayoutRequests />} />
-                      
-                    </Route>
-                  </Route>
-
-                  <Route
-                    element={
-                      <PrivateRoute allowedRoles={["student", "instructor", "admin"]} />
-                    }
-                  >
-                    <Route element={<DashboardLayout />}>
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/courses/:id" element={<CourseDetail />} />
-
-                    </Route>
-                  </Route>
-
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-
-                <ToastContainer position="top-right" autoClose={2000} />
+                <AppContent />
               </BrowserRouter>
             </TooltipProvider>
           </CookieConsentProvider>
@@ -170,8 +188,3 @@ const App = () => (
 );
 
 export default App;
-
-
-
-
-
