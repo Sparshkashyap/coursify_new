@@ -12,6 +12,8 @@ if (process.env.REDIS_URL) {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     connectTimeout: 10000,
+    lazyConnect: false,
+    
   });
 
   connection.on("connect", () => {
