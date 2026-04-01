@@ -29,14 +29,26 @@ const courseSchema = new mongoose.Schema(
       enum: ["draft", "published", "rejected"],
       default: "published",
     },
-     category: {
+
+    category: {
       type: String,
       default: "General",
       trim: true,
+    },
+
+    accessDurationValue: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    accessDurationUnit: {
+      type: String,
+      enum: ["days", "months", "years", "lifetime"],
+      default: "lifetime",
     },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("Course", courseSchema);
-

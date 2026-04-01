@@ -8,6 +8,7 @@ import {
   Sparkles,
   UploadCloud,
   Layers3,
+  Clock3,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,8 @@ const AddCourse = () => {
     isFree: true,
     image: "",
     video: "",
+    accessDurationValue: "0",
+    accessDurationUnit: "lifetime",
   });
 
   const [loading, setLoading] = useState(false);
@@ -71,6 +74,8 @@ const AddCourse = () => {
           isFree: course.isFree ?? true,
           image: course.image || "",
           video: course.video || "",
+          accessDurationValue: String(course.accessDurationValue ?? 0),
+          accessDurationUnit: course.accessDurationUnit || "lifetime",
         });
       } catch (err: any) {
         console.error("EDIT FETCH ERROR:", err.response?.data || err);
@@ -168,12 +173,23 @@ const AddCourse = () => {
       if (!form.video) return toast.error("Upload video first");
       if (!form.isFree && !form.price) return toast.error("Enter price for paid course");
 
+      if (
+        form.accessDurationUnit !== "lifetime" &&
+        (!form.accessDurationValue || Number(form.accessDurationValue) <= 0)
+      ) {
+        return toast.error("Enter a valid course access duration");
+      }
+
       setLoading(true);
 
       const payload = {
         ...form,
         category: form.category.trim(),
         price: form.isFree ? 0 : Number(form.price),
+        accessDurationValue:
+          form.accessDurationUnit === "lifetime"
+            ? 0
+            : Number(form.accessDurationValue),
       };
 
       if (isEditMode) {
@@ -230,7 +246,7 @@ const AddCourse = () => {
             </h1>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              Add your title, description, category, thumbnail, and course video in one clean flow.
+              Add your title, description, category, thumbnail, course video, and access validity.
             </p>
           </div>
 
@@ -322,6 +338,49 @@ const AddCourse = () => {
                 />
               </div>
             )}
+
+            <div className="rounded-2xl border border-border bg-background/50 p-5">
+              <label className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                <Clock3 className="h-4 w-4 text-primary" />
+                Course Access Duration
+              </label>
+
+              <div className="grid gap-4 md:grid-cols-[1fr_220px]">
+                <Input
+                  type="number"
+                  min="1"
+                  disabled={form.accessDurationUnit === "lifetime"}
+                  placeholder="e.g. 6"
+                  value={form.accessDurationUnit === "lifetime" ? "" : form.accessDurationValue}
+                  onChange={(e) =>
+                    setForm({ ...form, accessDurationValue: e.target.value })
+                  }
+                  className="h-11 bg-background"
+                />
+
+                <select
+                  value={form.accessDurationUnit}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      accessDurationUnit: e.target.value,
+                      accessDurationValue:
+                        e.target.value === "lifetime" ? "0" : form.accessDurationValue || "1",
+                    })
+                  }
+                  className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="lifetime">Lifetime</option>
+                  <option value="days">Days</option>
+                  <option value="months">Months</option>
+                  <option value="years">Years</option>
+                </select>
+              </div>
+
+              <p className="mt-3 text-xs text-muted-foreground">
+                Example: 6 + months means student gets 6 months access after enrollment.
+              </p>
+            </div>
           </motion.div>
 
           <motion.div

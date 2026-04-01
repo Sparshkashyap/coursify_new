@@ -9,12 +9,37 @@ const normalizeCategory = (value) => {
   return cleaned || "General";
 };
 
+const normalizeAccessDuration = (value, unit) => {
+  const normalizedUnit = ["days", "months", "years", "lifetime"].includes(unit)
+    ? unit
+    : "lifetime";
+
+  const normalizedValue =
+    normalizedUnit === "lifetime" ? 0 : Math.max(Number(value) || 0, 1);
+
+  return {
+    accessDurationValue: normalizedValue,
+    accessDurationUnit: normalizedUnit,
+  };
+};
+
+const isEnrollmentExpired = (enrollment) => {
+  if (!enrollment?.expiresAt) return false;
+  return new Date(enrollment.expiresAt).getTime() < Date.now();
+};
+
 export const createCourse = async (req, res) => {
   try {
     const userId = getUserId(req);
 
+    const duration = normalizeAccessDuration(
+      req.body.accessDurationValue,
+      req.body.accessDurationUnit
+    );
+
     const course = await Course.create({
       ...req.body,
+      ...duration,
       category: normalizeCategory(req.body.category),
       instructor: userId,
     });
@@ -150,8 +175,20 @@ export const getSingleCourse = async (req, res) => {
         status: { $in: ["active", "completed"] },
       });
 
-      hasAccess = !!foundEnrollment;
-      enrollment = foundEnrollment || null;
+      if (foundEnrollment) {
+        const expired = isEnrollmentExpired(foundEnrollment);
+
+        if (expired && !foundEnrollment.isExpired) {
+          foundEnrollment.isExpired = true;
+          await foundEnrollment.save();
+        }
+
+        hasAccess = !expired;
+        enrollment = {
+          ...foundEnrollment.toObject(),
+          isExpired: expired,
+        };
+      }
     }
 
     if (req.user?.role === "instructor" || req.user?.role === "admin") {
@@ -198,6 +235,19 @@ export const updateCourse = async (req, res) => {
 
     if (updatePayload.category !== undefined) {
       updatePayload.category = normalizeCategory(updatePayload.category);
+    }
+
+    if (
+      updatePayload.accessDurationValue !== undefined ||
+      updatePayload.accessDurationUnit !== undefined
+    ) {
+      const duration = normalizeAccessDuration(
+        updatePayload.accessDurationValue,
+        updatePayload.accessDurationUnit
+      );
+
+      updatePayload.accessDurationValue = duration.accessDurationValue;
+      updatePayload.accessDurationUnit = duration.accessDurationUnit;
     }
 
     course = await Course.findByIdAndUpdate(req.params.id, updatePayload, {

@@ -31,6 +31,22 @@ const getOrCreateWallet = async (instructorId) => {
   return wallet;
 };
 
+const calculateExpiryDate = (value, unit, baseDate = new Date()) => {
+  if (!value || unit === "lifetime") return null;
+
+  const date = new Date(baseDate);
+
+  if (unit === "days") {
+    date.setDate(date.getDate() + Number(value));
+  } else if (unit === "months") {
+    date.setMonth(date.getMonth() + Number(value));
+  } else if (unit === "years") {
+    date.setFullYear(date.getFullYear() + Number(value));
+  }
+
+  return date;
+};
+
 export const createRazorpayOrder = async (req, res) => {
   try {
     const { courseId, affiliateCode = "" } = req.body;
@@ -79,7 +95,7 @@ export const createRazorpayOrder = async (req, res) => {
       status: "active",
     });
 
-    if (existingEnrollment) {
+    if (existingEnrollment && !existingEnrollment.isExpired) {
       return res.status(400).json({
         success: false,
         message: "You are already enrolled in this course",
@@ -138,6 +154,8 @@ export const createRazorpayOrder = async (req, res) => {
         title: course.title,
         price: course.price,
         image: course.image || "",
+        accessDurationValue: course.accessDurationValue || 0,
+        accessDurationUnit: course.accessDurationUnit || "lifetime",
       },
     });
   } catch (err) {
@@ -256,7 +274,16 @@ export const verifyRazorpayPayment = async (req, res) => {
       course: payment.course,
     });
 
-    if (!existingEnrollment) {
+    const course = await Course.findById(payment.course);
+
+    if (!existingEnrollment && course) {
+      const startsAt = new Date();
+      const expiresAt = calculateExpiryDate(
+        course.accessDurationValue,
+        course.accessDurationUnit,
+        startsAt
+      );
+
       await Enrollment.create({
         student: studentId,
         course: payment.course,
@@ -265,10 +292,11 @@ export const verifyRazorpayPayment = async (req, res) => {
         totalLessons: 10,
         completedLessons: 0,
         progress: 0,
+        startsAt,
+        expiresAt,
+        isExpired: false,
       });
     }
-
-    const course = await Course.findById(payment.course);
 
     if (course) {
       const alreadyInStudents = course.students?.some(

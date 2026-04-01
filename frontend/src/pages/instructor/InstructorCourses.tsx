@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Download, Eye, Pencil, Plus, Trash2, Video } from "lucide-react";
+import { BookOpen, Download, Eye, Pencil, Plus, Trash2, Video, Clock3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "@/api/axios";
 import { toast, ToastContainer } from "react-toastify";
@@ -18,7 +18,14 @@ interface Course {
   price: number;
   isFree: boolean;
   students?: any[];
+  accessDurationValue?: number;
+  accessDurationUnit?: string;
 }
+
+const formatAccessDuration = (value?: number, unit?: string) => {
+  if (!value || unit === "lifetime") return "Lifetime";
+  return `${value} ${unit}`;
+};
 
 const InstructorCourses: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -112,12 +119,21 @@ const InstructorCourses: React.FC = () => {
 
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Badge>{course.isFree ? "Free" : `₹${course.price}`}</Badge>
+
                       {course.video && (
                         <Badge variant="secondary" className="gap-1">
                           <Video className="h-3.5 w-3.5" />
                           Video
                         </Badge>
                       )}
+
+                      <Badge variant="outline" className="gap-1">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        {formatAccessDuration(
+                          course.accessDurationValue,
+                          course.accessDurationUnit
+                        )}
+                      </Badge>
                     </div>
                   </div>
 
@@ -148,7 +164,7 @@ const InstructorCourses: React.FC = () => {
           )}
         </CardContent>
       </Card>
-      <ToastContainer  autoClose={2000}/>
+      <ToastContainer autoClose={2000} />
     </div>
   );
 };

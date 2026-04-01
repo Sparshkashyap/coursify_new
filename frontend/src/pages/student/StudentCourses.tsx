@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen } from "lucide-react";
+import { BookOpen, CalendarClock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ProgressTracker from "@/components/ProgressTracker";
 import { getStudentDashboard } from "@/api/studentApi";
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) return "Lifetime";
+  return new Date(value).toLocaleDateString();
+};
 
 const StudentCourses: React.FC = () => {
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -67,11 +72,23 @@ const StudentCourses: React.FC = () => {
                   className="hidden h-20 w-28 rounded-lg object-cover sm:block"
                 />
 
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-semibold">{ec.course?.title}</h3>
-                    <span className="text-xs text-muted-foreground">
-                      {ec.progress === 100 ? "Completed" : "In Progress"}
+                    <span
+                      className={`text-xs ${
+                        ec.isExpired
+                          ? "text-destructive"
+                          : ec.progress === 100
+                          ? "text-emerald-600"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {ec.isExpired
+                        ? "Expired"
+                        : ec.progress === 100
+                        ? "Completed"
+                        : "In Progress"}
                     </span>
                   </div>
 
@@ -80,10 +97,20 @@ const StudentCourses: React.FC = () => {
                     completedLessons={ec.completedLessons}
                     totalLessons={ec.totalLessons}
                   />
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      Started: {formatDate(ec.startsAt)}
+                    </span>
+                    <span>Valid till: {formatDate(ec.expiresAt)}</span>
+                  </div>
                 </div>
 
-                <Button asChild>
-                  <Link to={`/courses/${ec.course?._id}`}>Open Course</Link>
+                <Button asChild disabled={ec.isExpired}>
+                  <Link to={`/courses/${ec.course?._id}`}>
+                    {ec.isExpired ? "Expired" : "Open Course"}
+                  </Link>
                 </Button>
               </motion.div>
             ))

@@ -4,6 +4,27 @@ import Certificate from "../models/Certificate.js";
 
 const getUserId = (req) => req.user?._id || req.user?.id;
 
+const calculateExpiryDate = (value, unit, baseDate = new Date()) => {
+  if (!value || unit === "lifetime") return null;
+
+  const date = new Date(baseDate);
+
+  if (unit === "days") {
+    date.setDate(date.getDate() + Number(value));
+  } else if (unit === "months") {
+    date.setMonth(date.getMonth() + Number(value));
+  } else if (unit === "years") {
+    date.setFullYear(date.getFullYear() + Number(value));
+  }
+
+  return date;
+};
+
+const isEnrollmentExpired = (enrollment) => {
+  if (!enrollment?.expiresAt) return false;
+  return new Date(enrollment.expiresAt).getTime() < Date.now();
+};
+
 export const getStudentDashboard = async (req, res) => {
   try {
     const studentId = getUserId(req);
@@ -18,7 +39,23 @@ export const getStudentDashboard = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    const validEnrollments = enrollments.filter((e) => e.course);
+    const validEnrollments = [];
+
+    for (const enrollment of enrollments) {
+      if (!enrollment.course) continue;
+
+      const expired = isEnrollmentExpired(enrollment);
+
+      if (expired && !enrollment.isExpired) {
+        enrollment.isExpired = true;
+        await enrollment.save();
+      }
+
+      validEnrollments.push({
+        ...enrollment.toObject(),
+        isExpired: expired,
+      });
+    }
 
     const completed = validEnrollments.filter((e) => e.progress === 100);
     const certificates = validEnrollments.filter((e) => e.certificateIssued);
@@ -68,12 +105,19 @@ export const enrollInFreeCourse = async (req, res) => {
       course: courseId,
     });
 
-    if (existing) {
+    if (existing && !existing.isExpired) {
       return res.status(400).json({
         success: false,
         message: "Already enrolled in this course",
       });
     }
+
+    const startsAt = new Date();
+    const expiresAt = calculateExpiryDate(
+      course.accessDurationValue,
+      course.accessDurationUnit,
+      startsAt
+    );
 
     await Enrollment.create({
       student: studentId,
@@ -82,6 +126,9 @@ export const enrollInFreeCourse = async (req, res) => {
       totalLessons: 10,
       completedLessons: 0,
       progress: 0,
+      startsAt,
+      expiresAt,
+      isExpired: false,
     });
 
     const alreadyInStudents = course.students.some(
@@ -117,17 +164,28 @@ export const getMyCourseAccess = async (req, res) => {
       status: { $in: ["active", "completed"] },
     });
 
+    const expired = isEnrollmentExpired(enrollment);
+
+    if (enrollment && expired && !enrollment.isExpired) {
+      enrollment.isExpired = true;
+      await enrollment.save();
+    }
+
     res.json({
       success: true,
-      hasAccess: !!enrollment,
-      enrollment: enrollment || null,
+      hasAccess: !!enrollment && !expired,
+      enrollment: enrollment
+        ? {
+            ...enrollment.toObject(),
+            isExpired: expired,
+          }
+        : null,
     });
   } catch (err) {
     console.error("GET COURSE ACCESS ERROR:", err);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
 
 export const completeCourseAndIssueCertificate = async (req, res) => {
   try {
@@ -143,6 +201,13 @@ export const completeCourseAndIssueCertificate = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Enrollment not found",
+      });
+    }
+
+    if (isEnrollmentExpired(enrollment)) {
+      return res.status(400).json({
+        success: false,
+        message: "Course access has expired",
       });
     }
 

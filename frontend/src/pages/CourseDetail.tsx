@@ -10,6 +10,8 @@ import {
   Lock,
   Loader2,
   Tag,
+  Clock3,
+  CalendarClock,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "@/api/axios";
@@ -32,6 +34,16 @@ declare global {
   }
 }
 
+const formatAccessDuration = (value?: number, unit?: string) => {
+  if (!value || unit === "lifetime") return "Lifetime access";
+  return `${value} ${unit}`;
+};
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) return "N/A";
+  return new Date(value).toLocaleDateString();
+};
+
 const CourseDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,6 +53,7 @@ const CourseDetail: React.FC = () => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [enrollment, setEnrollment] = useState<any>(null);
   const [enrolling, setEnrolling] = useState(false);
 
   const fetchCourse = async () => {
@@ -50,6 +63,7 @@ const CourseDetail: React.FC = () => {
       setCourse(res.data.course);
       setReviews(res.data.reviews || []);
       setHasAccess(res.data.hasAccess || false);
+      setEnrollment(res.data.enrollment || null);
     } catch (err: any) {
       console.error("COURSE DETAIL ERROR:", err.response?.data || err);
       toast.error("Failed to load course details");
@@ -231,7 +245,9 @@ const CourseDetail: React.FC = () => {
                 <div className="space-y-3 px-6 text-center">
                   <Lock className="mx-auto h-14 w-14 opacity-70 sm:h-16 sm:w-16" />
                   <p className="text-sm text-slate-300">
-                    {course.isFree
+                    {enrollment?.isExpired
+                      ? "Your course access has expired"
+                      : course.isFree
                       ? "Enroll to access this course"
                       : "Buy this course to unlock video access"}
                   </p>
@@ -250,12 +266,38 @@ const CourseDetail: React.FC = () => {
                 </Badge>
               )}
               <Badge variant="outline">{course.reviewCount || 0} reviews</Badge>
+              <Badge variant="outline" className="gap-1">
+                <Clock3 className="h-3.5 w-3.5" />
+                {formatAccessDuration(
+                  course.accessDurationValue,
+                  course.accessDurationUnit
+                )}
+              </Badge>
             </div>
 
             <h1 className="text-2xl font-bold sm:text-3xl">{course.title}</h1>
             <p className="mt-3 leading-7 text-muted-foreground">
               {course.description}
             </p>
+
+            {isStudent && enrollment && (
+              <div className="mt-5 rounded-2xl border bg-muted/30 p-4">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <span className="inline-flex items-center gap-2 text-muted-foreground">
+                    <CalendarClock className="h-4 w-4" />
+                    Started: <strong className="text-foreground">{formatDate(enrollment.startsAt)}</strong>
+                  </span>
+
+                  <span className="inline-flex items-center gap-2 text-muted-foreground">
+                    Valid till: <strong className="text-foreground">{formatDate(enrollment.expiresAt)}</strong>
+                  </span>
+
+                  <Badge variant={enrollment.isExpired ? "destructive" : "secondary"}>
+                    {enrollment.isExpired ? "Expired" : "Active"}
+                  </Badge>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -283,7 +325,7 @@ const CourseDetail: React.FC = () => {
               <BadgeCheck className="mb-3 h-5 w-5 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">Access</p>
               <p className="text-2xl font-bold">
-                {hasAccess ? "Unlocked" : "Locked"}
+                {hasAccess ? "Unlocked" : enrollment?.isExpired ? "Expired" : "Locked"}
               </p>
             </div>
           </div>

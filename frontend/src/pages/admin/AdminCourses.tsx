@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Clock3 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import {
   getAdminCourses,
@@ -26,6 +26,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+const formatAccessDuration = (value?: number, unit?: string) => {
+  if (!value || unit === "lifetime") return "Lifetime";
+  return `${value} ${unit}`;
+};
 
 const AdminCourses: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -117,6 +122,7 @@ const AdminCourses: React.FC = () => {
                 <TableHead>Course</TableHead>
                 <TableHead>Instructor</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead>Students</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -126,11 +132,11 @@ const AdminCourses: React.FC = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6}>Loading courses...</TableCell>
+                  <TableCell colSpan={7}>Loading courses...</TableCell>
                 </TableRow>
               ) : courses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>No courses found.</TableCell>
+                  <TableCell colSpan={7}>No courses found.</TableCell>
                 </TableRow>
               ) : (
                 courses.map((course) => (
@@ -138,6 +144,15 @@ const AdminCourses: React.FC = () => {
                     <TableCell className="font-medium">{course.title}</TableCell>
                     <TableCell>{course.instructor?.name || "Unknown"}</TableCell>
                     <TableCell>{course.isFree ? "Free" : `₹${course.price}`}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        {formatAccessDuration(
+                          course.accessDurationValue,
+                          course.accessDurationUnit
+                        )}
+                      </span>
+                    </TableCell>
                     <TableCell>{course.students?.length || 0}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{course.status}</Badge>
@@ -176,7 +191,7 @@ const AdminCourses: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-      <ToastContainer  autoClose={2000}/>
+      <ToastContainer autoClose={2000} />
     </div>
   );
 };
