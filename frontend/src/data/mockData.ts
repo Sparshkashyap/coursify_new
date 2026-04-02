@@ -122,12 +122,12 @@ export const mockCourses: Course[] = [
 ];
 
 export const mockReviews: Review[] = [
-  { id: "r1", courseId: "c1", userName: "Michael T.", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face", rating: 5, comment: "Best React course I've taken. The Next.js section alone is worth the price. Sarah explains complex concepts with clarity.", date: "2024-12-15" },
+  { id: "r1", courseId: "c1", userName: "Michael T.", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face", rating: 5, comment: "Best React course I've taken. The Next.js section alone is worth the price. Sarah explains .", date: "2024-12-15" },
   { id: "r2", courseId: "c1", userName: "Lisa K.", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop&crop=face", rating: 4, comment: "Excellent content and well-structured. Would love more advanced patterns in a follow-up course.", date: "2024-11-28" },
   { id: "r3", courseId: "c2", userName: "David R.", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&h=80&fit=crop&crop=face", rating: 5, comment: "Went from zero Python knowledge to building ML models. James is an amazing instructor!", date: "2024-12-01" },
   { id: "r4", courseId: "c3", userName: "Anna S.", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&h=80&fit=crop&crop=face", rating: 5, comment: "This free course is better than most paid ones. Maria's teaching style is engaging and practical.", date: "2024-12-10" },
   { id: "r5", courseId: "c5", userName: "Chris W.", avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face", rating: 5, comment: "Challenging but incredibly rewarding. The hands-on projects make all the difference.", date: "2024-11-20" },
-  { id: "r6", courseId: "c4", userName: "Sophie L.", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face", rating: 4, comment: "Great for learning React Native. The Expo sections are particularly well done.", date: "2024-12-05" },
+  { id: "r6", courseId: "c4", userName: "Sophie L.", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face", rating: 4, comment: "This is a great course for learning React Native.The Expo sections are especially well explained.", date: "2024-12-05" },
 ];
 
 export const mockEnrolledCourses: EnrolledCourse[] = [
