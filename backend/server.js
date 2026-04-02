@@ -30,6 +30,7 @@ import payoutRoutes from "./routes/payoutRoutes.js";
 import refundRoutes from "./routes/refundRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use("/certificates", certificateRoutes);
 app.use("/course-assistant", courseAssistantRoutes);
 app.use("/subscriptions", subscriptionRoutes);
 app.use("/users", userRoutes);
+app.use("/chatbot",chatbotRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running...");

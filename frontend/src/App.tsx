@@ -66,6 +66,8 @@ import RefundPolicy from "@/pages/RefundPolicy";
 import AppSplashScreen from "@/components/AppSplashScreen";
 import PageTransition from "@/components/PageTransition";
 import useAppLoader from "@/hooks/useAppLoader";
+import ChatbotLauncher from "@/components/chatbot/ChatbotLauncher";
+import { ChatbotProvider } from "@/contexts/ChatbotContext";
 
 const queryClient = new QueryClient();
 
@@ -149,7 +151,7 @@ const AnimatedAppRoutes = () => {
 };
 
 const AppContent = () => {
-  const loading = useAppLoader(2200);
+  const loading = useAppLoader(1850);
 
   return (
     <>
@@ -162,6 +164,7 @@ const AppContent = () => {
           <CookieConsentBanner />
           <CookiePreferencesModal />
           <AnimatedAppRoutes />
+          <ChatbotLauncher/>
           <ToastContainer position="top-right" autoClose={2000} />
         </>
       )}
@@ -175,11 +178,13 @@ const App = () => (
       <AuthProvider>
         <WishlistProvider>
           <CookieConsentProvider>
+            <ChatbotProvider> 
             <TooltipProvider>
               <BrowserRouter>
                 <AppContent />
               </BrowserRouter>
             </TooltipProvider>
+            </ChatbotProvider>
           </CookieConsentProvider>
         </WishlistProvider>
       </AuthProvider>
