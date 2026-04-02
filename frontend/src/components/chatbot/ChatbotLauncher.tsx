@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import ChatbotButton from "./Chatbotbutton";
+import ChatbotButton from "./temp";
 import ChatbotWindow from "./ChatbotWindow";
 
 const hiddenPaths = ["/login", "/signup", "/forgot-password"];
